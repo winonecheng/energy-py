@@ -1,7 +1,6 @@
 datasets
 episode render
 gym 1.0
-tf 2.0
 dqn extensions
 ray
 n step return generalized advantage
@@ -17,5 +16,11 @@ naming of columns in energypy
 charge is not being scaled beofre being addedinto the observation
 learning every n steps (like dqn does - I think)
 making a proper observation space - if sent in prices, then generate a perfect forecast (or a lagged feature block?)
-pip install tensorflow==2.0.0-alpha0 
 scaling of charge before going into obs (use capacity)
+parallel battery
+
+--- 
+
+Interface refactor
+tf 2.0
+
