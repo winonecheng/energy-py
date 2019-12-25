@@ -18,7 +18,32 @@ collector = Collector()
 labeller = Labeller()
 
 fitter = Fitter()
+
 All envs are parallelized by default
+
+objects
+- env - can this be built into tf
+- Dataset
+
+collector = Collector(env, policy)
+
+results = parallelize_collector(collector, n_jobs=8)
+
+results == Dataset
+
+labeller = Labeller(value_function)
+labelled_results = labeller.label(results)
+
+fitter = Fitter(value_function)
+fitter.fit(labelled_results, policy)
+
+functions
+- policy
+- value fctn
+
+simple (common) data struct == np.array
+
+Value function == more concrete than a Labeller
 
 """
 
@@ -60,6 +85,7 @@ def random_policy(states, action_space):
     print(actions.shape)
     assert actions.shape == (num_samples, 2)
     return actions
+
 
 class Dataset(list):
     def __init__(self):
@@ -104,7 +130,7 @@ if __name__ == '__main__':
         def __init__(self):
             pass
 
-        def __call__(self, states):
+        def forward(self, states):
             return 1
 
         def get_actions(self, states, actions):
@@ -124,7 +150,7 @@ if __name__ == '__main__':
     def update(value_function, states, labels):
         #  maybe could take state as input
         #  features, label
-        targets = value_function(states)
+        targets = value_function.forward(states)
         error = targets - labels
         # value_function.backward(error)
         return value_function

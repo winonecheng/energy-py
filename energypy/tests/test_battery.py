@@ -8,6 +8,13 @@ import energypy
 default_config = {
     'env_id': 'battery',
     'dataset': 'example',
+    'efficiency': 0.9,
+    'sample_strat': 'full'
+}
+
+parallel_battery_config = {
+    'env_id': 'parallel-battery',
+    'dataset': 'example',
     'initial_charge': 0,
     'efficiency': 0.9,
     'sample_strat': 'full'
