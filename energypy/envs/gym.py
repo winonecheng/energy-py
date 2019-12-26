@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import gym
+import numpy as np
 
 from energypy.common.spaces import ActionSpace
 from energypy.common.spaces import PrimitiveConfig as Prim
@@ -19,7 +20,7 @@ class EnvWrapper(object):
         return self.env.step(action)
 
     def reset(self):
-        return self.env.reset()
+        return np.expand_dims(self.env.reset(), 0)
 
     def seed(self, seed=None):
         if seed:
@@ -32,7 +33,7 @@ class CartPoleEnv(EnvWrapper):
 
     def __init__(self):
         env = gym.make('CartPole-v0')
-        super(CartPoleEnv, self).__init__(env)
+        super().__init__(env)
 
         self.observation_space = self.env.observation_space
 
@@ -45,7 +46,7 @@ class CartPoleEnv(EnvWrapper):
         next_state, reward, done, info = self.env.step(action[0][0])
         self.info['action'].append(action[0][0])
         self.info['reward'].append(reward)
-        return next_state, reward, done, self.info
+        return next_state.reshape(1, *next_state.shape), np.array(reward).reshape(1, 1), np.array(done).reshape(1, 1), self.info
 
 
 class PendulumEnv(EnvWrapper):

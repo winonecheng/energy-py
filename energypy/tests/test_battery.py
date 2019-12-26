@@ -12,14 +12,6 @@ default_config = {
     'sample_strat': 'full'
 }
 
-parallel_battery_config = {
-    'env_id': 'parallel-battery',
-    'dataset': 'example',
-    'initial_charge': 0,
-    'efficiency': 0.9,
-    'sample_strat': 'full'
-}
-
 
 @pytest.mark.parametrize(
     'action, initial_charge, expected_charge',
@@ -36,6 +28,7 @@ def test_charge(action, initial_charge, expected_charge):
     charge = env.get_state_variable('Charge [MWh]')
 
     assert charge == expected_charge
+    import pdb; pdb.set_trace()
 
 
 def test_discharge():

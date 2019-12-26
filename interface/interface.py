@@ -1,4 +1,5 @@
 """
+# energy-py 3.0 - maturing of the vision (sample efficiency)
 Review minimal & huskarl
 
 RL
@@ -21,9 +22,22 @@ fitter = Fitter()
 
 All envs are parallelized by default
 
+# rollouts on single core / gpu
+# vs
+# multi core
+
+#  gpu rollouts
+
 objects
 - env - can this be built into tf
 - Dataset
+- State & Obs space & action space (multiagent by defn!)
+# different random sampling!
+
+# env.state_space
+# env.state_space.sample()
+# env.state_space.data[env.cursor, 'Charge [MWh]']
+# env.state_space[env.cursor, 'Charge [MWh]']
 
 collector = Collector(env, policy)
 
