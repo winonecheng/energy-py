@@ -1,50 +1,72 @@
 import tensorflow as tf
 import numpy as np
 
-# TensorFlowInfo():
-#dataset == info
+from collections import UserDict
 
 
-# action = charging is positive, discharging is negative [MW]
+class TensorFlowInfo(UserDict):
+    # concrete interface w/ tf
+    def __setitem__(self, k, v):
+        super().__setitem__(k, v)
+
+    def __getitem__(self, k):
+        try:
+            k, cursor = k
+
+        except ValueError:
+            k = k
+            cursor = None
+        val = super().__getitem__(k)
+
+        if cursor is not None:
+            return tf.expand_dims(val[:, cursor, :], 1)
+        else:
+            return val
+
 
 class BatteryTensorFlowEnv():
+    # action = charging is positive, discharging is negative [MW]
     def __init__(
         self,
         agents=64,
         initial_charge=0,
         capacity=2,
+        power=4,
+        max_episode_length=2016
     ):
         # three agents, 9 episode horizon, 4 dim in obs
         self.obs = tf.random.uniform((3, 9, 4))
         self.agents = agents
-        max_episode_length = 32
+        self.power = power
         self.max_episode_length = max_episode_length
 
+        from energypy.common.spaces import StateSpace, ActionSpace
+        from energypy.common.spaces import PrimitiveConfig as Prim
         # todo different for each agent
         self.initial_charge = tf.fill((self.agents, 1, 1), initial_charge)
+        self.action_space = ActionSpace().from_primitives(
+            Prim('Power [MW]', -self.power, power, 'continuous', None)
+        )
 
     def reset(self):
         self.cursor = 0
 
-        from collections import defaultdict
-        self.info = defaultdict(list)
+        self.info = TensorFlowInfo()
 
         self.info['Initial charge [MWh]'] = self.initial_charge
 
-        self.info['Price [$/MWh]'] = tf.random.uniform(shape=(env.agents, self.max_episode_length, 1))
+        self.info['Price [$/MWh]'] = tf.random.uniform(shape=(self.agents, self.max_episode_length, 1))
 
-        self.info['observation'] = tf.random.uniform(shape=(env.agents, self.max_episode_length, 1))
+        self.info['observation'] = tf.random.uniform(shape=(self.agents, self.max_episode_length, 1))
 
-        return tf.expand_dims(
-            self.info['observation'][:, self.cursor, :], 1
-        )
+        return self.info['observation', self.cursor]
 
     def step(self, actions):
-        actions = tf.reshape(actions, (self.agents, 1, 1)) / 12
+        actions = tf.reshape(actions, (self.agents, 1, 1)) / 12.0
 
-        old_charge = self.info['Initial charge [MWh]'][:, -1, :]
         #  single timestep
-        old_charge = tf.reshape(old_charge, (self.agents, 1, 1))
+        old_charge = self.info['Initial charge [MWh]', -1]
+        old_charge = tf.cast(old_charge, tf.float32)
 
         capacity = 4.0
         eff = 0.9
@@ -64,60 +86,53 @@ class BatteryTensorFlowEnv():
             self.info['Price [$/MWh]'][:, -1, :], 1)
 
         reward = prices * charge
-        done = tf.fill((3, 1), False)
 
-        # lots of info in info dict
-        for col, arr in [
-                ('Final charge [MWh]', charge),
-                ('Loss [MW]', loss)]:
-            try:
-                self.info[col] = tf.concat([
-                    self.info[col],
-                    arr], axis=1
-                )
-            except tf.errors.InvalidArgumentError:
-                self.info[col] = arr
+        self.info['Final charge [MWh]'] = charge
+        self.info['Loss [MW]'] = loss
 
-        self.cursor += 1
+        if self.cursor < self.obs.shape[0]:
+            self.cursor += 1
+            done = tf.fill((self.agents, 1, 1), False)
+        else:
+            done = tf.fill((self.agents, 1, 1), True)
+
+        #  add
+
         return self.obs[:, self.cursor, :], reward, done, self.info
 
-# dataset = Example()
 
-def test_charge():
-    cfg = {
-        'agents': 4,
-    }
+if __name__ == '__main__':
 
-    env = BatteryTensorFlowEnv(**cfg)
+    agents = 1024
+    import energypy
 
+    from energypy.interface.collector import episode, random_policy
+    import time
+
+    start = time.time()
+    # single = [episode(random_policy, 'battery') for _ in range(agents)]
+    end = time.time()
+    print(end - start)
+
+    def random_policy_vectorized(obs, env):
+        lows, highs = [], []
+
+        for dim in env.action_space.values():
+            lows.append(dim.low)
+            highs.append(dim.high)
+        return np.random.uniform(lows, highs)
+
+    # parallel_episode
+    start = time.time()
+    policy = random_policy_vectorized
+    env = BatteryTensorFlowEnv(agents=agents, max_episode_length=2016)
     obs = env.reset()
-    action = tf.fill((env.agents, 1), 1.0)
-    next_ob, reward, done, info = env.step(action)
+    random_policy_vectorized(obs, env)
+    done = tf.fill((env.agents, 1, 1), False)
 
-    np.testing.assert_allclose(info['Final charge [MWh]'][:, -1, :], np.full(cfg['agents'], 1.0 / 12).reshape(env.agents, 1))
-
-
-# def test_discharge():
-
-# def test no nop
-cfg = {
-    'agents': 4,
-    'initial_charge': 4.0,
-    'capacity': 4.0
-}
-
-# multiple agent + env combos
-
-# num_agents, timestep, space_dims
-
-env = BatteryTensorFlowEnv(**cfg)
-obs = env.reset()
-
-action = tf.fill((env.agents, 1, 1), -1.0)
-next_obs, rew, d, info = env.step(action)
-
-charge = info['Final charge [MWh]'][:, -1, :]
-np.testing.assert_array_almost_equal(charge, np.full((cfg['agents']), 4.0 - 1.0 / 12).reshape(env.agents, 1))
-
-losses = info['Loss [MW]'][:, -1, :]
-np.testing.assert_array_almost_equal(losses, np.full((cfg['agents']), 1.0 * (1 - 0.9)).reshape(env.agents, 1))
+    while not all(done):
+        action = policy(obs, env)
+        action = tf.cast(np.zeros((env.agents, 1, 1)), tf.float32)
+        next_obs, reward, done, info = env.step(action)
+    end = time.time()
+    print(end - start)

@@ -79,6 +79,7 @@ def episode(policy, env_id):
 def random_policy(obs, env):
     return env.action_space.sample()
 
+
 if __name__ == '__main__':
     import timeit
     num = 1024
