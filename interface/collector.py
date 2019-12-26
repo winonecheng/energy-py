@@ -30,6 +30,13 @@ class MultiProcessCollector():
 
         return datasets[:episodes]
 
+
+class ParallelEnvCollector():
+
+    def collect(self, episodes):
+        pass
+
+
 from collections import UserDict
 import numpy as np
 
@@ -74,7 +81,7 @@ def random_policy(obs, env):
 
 if __name__ == '__main__':
     import timeit
-    num = 5012 * 2
+    num = 1024
 
     def test_collectors():
         start = timeit.default_timer()

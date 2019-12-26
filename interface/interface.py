@@ -15,18 +15,12 @@ Rl is
 Three interfaces
 
 collector = Collector()
-
 labeller = Labeller()
-
 fitter = Fitter()
 
 All envs are parallelized by default
 
-# rollouts on single core / gpu
-# vs
-# multi core
-
-#  gpu rollouts
+collection on single core, mulit core, gpu
 
 objects
 - env - can this be built into tf
@@ -38,12 +32,6 @@ objects
 # env.state_space.sample()
 # env.state_space.data[env.cursor, 'Charge [MWh]']
 # env.state_space[env.cursor, 'Charge [MWh]']
-
-collector = Collector(env, policy)
-
-results = parallelize_collector(collector, n_jobs=8)
-
-results == Dataset
 
 labeller = Labeller(value_function)
 labelled_results = labeller.label(results)
@@ -58,7 +46,6 @@ functions
 simple (common) data struct == np.array
 
 Value function == more concrete than a Labeller
-
 """
 
 import numpy as np

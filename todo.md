@@ -18,6 +18,7 @@ learning every n steps (like dqn does - I think)
 making a proper observation space - if sent in prices, then generate a perfect forecast (or a lagged feature block?)
 scaling of charge before going into obs (use capacity)
 parallel battery
+reward space!!
 
 --- 
 
