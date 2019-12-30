@@ -1,11 +1,12 @@
 from energypy.envs.battery import Battery
-from energypy.envs.gym import CartPoleEnv, PendulumEnv, MountainCarEnv
+from energypy.envs.gym import CartPoleEnv, PendulumEnv, MountainCarEnv, MountainCarContinuousEnv
 
 register = {
     'battery': Battery,
     'cartpole-v0': CartPoleEnv,
     'pendulum-v0': PendulumEnv,
-    'mountaincar-v0': MountainCarEnv,
+    'mountain-car-v0': MountainCarEnv,
+    'mountain-car-continuous-v0': MountainCarContinuousEnv,
 }
 
 

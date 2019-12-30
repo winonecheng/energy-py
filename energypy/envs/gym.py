@@ -20,7 +20,7 @@ class EnvWrapper(object):
         return self.env.step(action)
 
     def reset(self):
-        return np.expand_dims(self.env.reset(), 0)
+        return np.expand_dims(self.env.reset(), 0).astype(np.float32)
 
     def seed(self, seed=None):
         if seed:
@@ -28,6 +28,7 @@ class EnvWrapper(object):
 
         #  should just inherit from the gym envs - TODO
         #  from gym.envs.classic_control import CartPoleEnv
+
 
 class CartPoleEnv(EnvWrapper):
 
@@ -66,7 +67,7 @@ class MountainCarEnv(EnvWrapper):
 
     def __init__(self):
         env = gym.make('MountainCar-v0')
-        super(MountainCarEnv, self).__init__(env)
+        super().__init__(env)
 
         self.observation_space = self.env.observation_space
 
@@ -77,3 +78,23 @@ class MountainCarEnv(EnvWrapper):
     def step(self, action):
         #  doesn't accept an array!
         return self.env.step(action[0][0])
+
+
+class MountainCarContinuousEnv(EnvWrapper):
+
+    def __init__(self):
+        env = gym.make('MountainCarContinuous-v0')
+        super().__init__(env)
+
+        self.observation_space = self.env.observation_space
+
+        #  -1 to 1
+        self.action_space = ActionSpace('action').from_primitives(
+            Prim('l_or_r', self.env.action_space.low, self.env.action_space.high, 'continuous', None)
+        )
+
+    def step(self, action):
+        next_state, reward, done, info = self.env.step(action[0])
+        self.info['action'].append(action[0][0])
+        self.info['reward'].append(reward)
+        return next_state.reshape(1, *next_state.shape).astype(np.float32), np.array(reward).reshape(1, 1), np.array(done).reshape(1, 1), self.info
