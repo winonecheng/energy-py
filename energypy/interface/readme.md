@@ -2,6 +2,12 @@
 # energy-py 3.0 - maturing of the vision (sample efficiency)
 Review minimal & huskarl
 
+    # separating out the collecting from fitting
+    # optimizer & policy params not on same obj (cool!)
+
+    #  initalize the policy inside the episode (inside the p.map)
+    #  last possible moment
+
 RL
 - clean architecture
 

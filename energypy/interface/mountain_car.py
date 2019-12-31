@@ -2,70 +2,54 @@ import energypy
 
 import os
 
+from energypy.interface.collectors import collapse_episode_data, make_policy, MultiProcessCollector
+from energypy.common.memories.memory import calculate_returns
+import numpy as np
+
+from energypy.interface.labeller import SingleProcessLabeller
 import tensorflow as tf
 
-    # separating out the collecting from fitting
-    # optimizer & policy params not on same obj (cool!)
-
-    #  initalize the policy inside the episode (inside the p.map)
-    #  last possible moment
-
-from tensorflow.keras.layers import Dense
-import tensorflow_probability as tfp
-
 import timeit
-from energypy.interface.collectors import *
-
-def main():
-
-    def calculate_returns_wrapper(data):
-        discount = 0.9 # TODO
-        for ep in data:
-            ep['returns'] = calculate_returns(ep['reward'], discount)
-        return data
 
 
-    def log_prob_wrapper(data):
-        out = []
-        for ep in data:
-            policy = make_policy(
-                policy_id=ep['policy_id'][0][0], #TODO
-                env_id=ep['env_id'][0][0],
-                weights=ep['weights'][0][0]
-            )
-            out.append(policy.log_prob(ep))
+def calculate_returns_wrapper(data):
+    discount = 0.9 # TODO
+    for ep in data:
+        ep['returns'] = calculate_returns(ep['reward'], discount)
+    return data
 
-        return out
 
-    optimizer = tf.keras.optimizers.Adam(0.001)
-
-    # REINFORCE
-
-    def directory(*args):
-        return os.path.join(
-            os.environ['HOME'], 'energy-py', 'experiments',
+class Directory():
+    def __init__(self, *args):
+        self.home = os.path.join(
+            os.environ['HOME'], 'energy-py',
             *args
         )
 
-    num_collect = 6
-    env_id = 'mountain-car-continuous-v0'
+    def __call__(self, *args):
+        return os.path.join(self.home, *args)
 
-    weights = directory('run_0', 'policy_0')
+
+if __name__ == '__main__':
+    directory = Directory('experiments', 'mountaincar-reinforce')
+    optimizer = tf.keras.optimizers.Adam(0.001)
+
+    # REINFORCE
+    num_collect = 16
+    env_id = 'mountain-car-continuous-v0'
+    # env_id = 'cartpole-v0'
+
+    weights_dir = directory('run_0', 'policy_0')
     policy_params = {
         'policy_id': 'gaussian',
         'env_id': env_id,
     }
     pol = make_policy(**policy_params)
-    pol.save(weights)
+    pol.save(weights_dir)
 
-    from energypy.interface.labeller import collapse_episode_data
-    from energypy.common.memories.memory import calculate_returns
+    for step in range(1, 500):
 
-    from energypy.interface.labeller import SingleProcessLabeller
-
-    for step in range(1, 5):
-
-        policy_params['weights'] = weights
+        policy_params['weights_dir'] = weights_dir
 
         collector = MultiProcessCollector(
             policy_params, env_id, n_jobs=6
@@ -74,7 +58,8 @@ def main():
         start = timeit.default_timer()
         data = collector.collect(num_collect)
 
-        coll = collapse_episode_data(data)
+        # TODO operates in place!!!!
+        # coll = collapse_episode_data(data)
         stop = timeit.default_timer()
         #print(stop - start)
 
@@ -93,7 +78,6 @@ def main():
         print(weights)
         pol.save(weights)
 
-        print(np.mean(coll['reward']), loss)
+        rews = [np.sum(d['reward']) for d in data]
 
-if __name__ == '__main__':
-    main()
+        print('reward {} loss {} step {}'.format(np.mean(rews), loss, step))

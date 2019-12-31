@@ -5,11 +5,22 @@ import timeit
 
 def test_collectors():
     start = timeit.default_timer()
-    num = 1024
+    num = 8
+
+    env_id = 'cartpole-v0'
+    policy_params = {
+        'policy_id': 'random',
+        'env_id': env_id,
+        'weights_dir': 'a'
+    }
 
     collectors = [
-        SingleProcessCollector(RandomPolicy('cartpole-v0')),
-        MultiProcessCollector(RandomPolicy('cartpole-v0'),  n_jobs=8)
+        SingleProcessCollector(
+            policy_params, env_id
+        ),
+        MultiProcessCollector(
+            policy_params, env_id, n_jobs=2
+        )
     ]
 
     for collector in collectors:

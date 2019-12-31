@@ -9,14 +9,6 @@ def reward_only_labeller(data):
     }
 
 
-def collapse_episode_data(data):
-    all_data = data[0]
-    for d in data[1:]:
-        for k, v in d.items():
-            all_data[k] = np.concatenate(
-                [all_data[k], v]
-            )
-    return all_data
 
 
 class SingleProcessLabeller:
@@ -25,29 +17,6 @@ class SingleProcessLabeller:
 
     def label(self, data):
         return self.map_fctn(data)
-
-class TensorFlowValueFunction:
-
-    def value(self, obs):
-        return tf.constant(0)
-
-    def __call__(self, data):
-        try:
-            return {
-                'value': self.value(data['obs'])
-            }
-        except TypeError:
-            data = collapse_episode_data(data)
-            return {
-                'value': self.value(data['obs'])
-            }
-
-class TensorFlowFitter:
-    def __init__(self, params):
-        self.params = params
-
-    def fit(self, data):
-        take_gradient(data['loss'], self.params)
 
 
 if __name__ == '__main__':
