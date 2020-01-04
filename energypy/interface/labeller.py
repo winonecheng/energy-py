@@ -1,14 +1,13 @@
-import tensorflow as tf
-
 from energypy.interface.collectors import *
 
-
-def reward_only_labeller(data):
-    return {
-        'reward': data['reward']
-    }
+from energypy.common.memories.memory import calculate_returns
 
 
+def calculate_returns_wrapper(data):
+    discount = 0.98 #TODO
+    for ep in data:
+        ep['returns'] = calculate_returns(ep['reward'], discount)
+    return data
 
 
 class SingleProcessLabeller:
@@ -17,14 +16,3 @@ class SingleProcessLabeller:
 
     def label(self, data):
         return self.map_fctn(data)
-
-
-if __name__ == '__main__':
-    collector = SingleProcessCollector(random_policy)
-    data = collector.collect(16)
-
-    labeller = SingleProcessLabeller(map_fctn=reward_only_labeller)
-    labelled_data = labeller.label(data)
-
-    labeller = SingleProcessLabeller(map_fctn=TensorFlowValueFunction())
-    labelled_data = labeller.label(data)

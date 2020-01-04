@@ -1,10 +1,9 @@
-from multiprocessing import Pool
-from functools import partial
-
 import energypy
 
+import os
 
-from collections import UserDict
+
+from collections import UserDict, UserList
 import numpy as np
 
 from energypy.interface.policies import make_policy
@@ -14,7 +13,7 @@ def episode(policy_params, env_id):
     """ runs full episode, returns lists of datasets """
 
     policy = make_policy(**policy_params)
-    dataset = Dataset()
+    dataset = SingleEpisodeDataset()
 
     env = energypy.make_env(env_id)
     obs = env.reset()
@@ -30,13 +29,13 @@ def episode(policy_params, env_id):
             next_obs=next_obs,
             done=done,
             policy_id=np.array(policy_params['policy_id']).reshape(1, 1),
-            weights_dir=np.array(policy_params['weights_dir']).reshape(1, 1),
+            directory=np.array(policy_params['directory']).reshape(1, 1),
             env_id=np.array(policy_params['env_id']).reshape(1, 1),
 
         )
+        obs = next_obs
 
     return dataset
-
 
 
 class SingleProcessCollector():
@@ -45,7 +44,10 @@ class SingleProcessCollector():
         self.env_id = env_id
 
     def collect(self, episodes):
-        return [episode(self.policy_params, self.env_id) for _ in range(episodes)]
+        return MultiEpisodeDataset([
+            episode(self.policy_params, self.env_id)
+            for _ in range(episodes)
+        ])
 
 
 class MultiProcessCollector():
@@ -70,14 +72,9 @@ class MultiProcessCollector():
         return datasets[:episodes]
 
 
-class ParallelEnvCollector():
-    # tensorflow
+class SingleEpisodeDataset(UserDict):
+    # TODO defaultdict with empty np array!
 
-    def collect(self, episodes):
-        pass
-
-
-class Dataset(UserDict):
     def append(self, **kwargs):
         for k, v in kwargs.items():
 
@@ -88,3 +85,45 @@ class Dataset(UserDict):
                 )
             else:
                 super().__setitem__(k, v)
+
+    def keys(self):
+        return self.data.keys()
+
+    def values(self):
+        return self.data.values()
+
+    def save(self, path, key):
+        np.save(path, self[key])
+
+
+class MultiEpisodeDataset(UserList):
+    def save(self, path, keys):
+        for idx, d in enumerate(self.data):
+            for k in keys:
+                d.save(
+                    os.path.join(path, k+'_'+str(idx)), k
+                )
+
+    def collapse(self):
+        data = self
+        from copy import deepcopy
+        all_data = deepcopy(data[0])
+        for d in data[1:]:
+            for k, v in d.items():
+                all_data[k] = np.concatenate(
+                    [all_data[k], v]
+                )
+        return all_data
+
+
+if __name__ == '__main__':
+    env_id = 'mountain-car-continuous-v0'
+    policy_params = {
+        'policy_id': 'softmax',
+        'env_id': env_id,
+        'weights_dir': None
+    }
+    collector = SingleProcessCollector(policy_params, env_id)
+    data = collector.collect(2)
+
+

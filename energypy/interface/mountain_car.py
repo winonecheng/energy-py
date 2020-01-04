@@ -1,9 +1,23 @@
+"""
+TODO
+- multi episode dataset
+- continue from last policy !!!
+"""
+
+
+
+
+
+
+
+
 import energypy
 
 import os
 
-from energypy.interface.collectors import collapse_episode_data, make_policy, MultiProcessCollector
-from energypy.common.memories.memory import calculate_returns
+from energypy.interface.policies import make_policy
+
+from energypy.interface.collectors import MultiProcessCollector, SingleProcessCollector
 import numpy as np
 
 from energypy.interface.labeller import SingleProcessLabeller
@@ -12,72 +26,93 @@ import tensorflow as tf
 import timeit
 
 
-def calculate_returns_wrapper(data):
-    discount = 0.9 # TODO
-    for ep in data:
-        ep['returns'] = calculate_returns(ep['reward'], discount)
-    return data
+class CustomLogger():
+    def __init__(self, log_file, header=None):
+        self.log_file = os.path.join(log_file)
 
+        if header:
+            self(header)
+
+    def __call__(self, msg, verbose=True):
+        with open(self.log_file, 'a') as lf:
+            lf.write(msg+'\n')
+        if verbose:
+            print(msg)
+
+
+from energypy.interface.labeller import calculate_returns_wrapper
 
 class Directory():
-    def __init__(self, *args):
+    def __init__(self, *args, delete=False):
         self.home = os.path.join(
             os.environ['HOME'], 'energy-py',
             *args
         )
 
+        if delete:
+            import shutil
+            shutil.rmtree(self.home, ignore_errors=True)
+
     def __call__(self, *args):
-        return os.path.join(self.home, *args)
+        path = os.path.join(self.home, *args)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        return path
 
 
 if __name__ == '__main__':
-    directory = Directory('experiments', 'mountaincar-reinforce')
-    optimizer = tf.keras.optimizers.Adam(0.001)
+    env_id = 'cartpole-v0'
+    run_directory = Directory('experiments', env_id, 'run_0', delete=True)
 
-    # REINFORCE
-    num_collect = 16
-    env_id = 'mountain-car-continuous-v0'
-    # env_id = 'cartpole-v0'
-
-    weights_dir = directory('run_0', 'policy_0')
+    step = 0
     policy_params = {
-        'policy_id': 'gaussian',
+        'policy_id': 'softmax',
         'env_id': env_id,
+        'directory': None
     }
     pol = make_policy(**policy_params)
-    pol.save(weights_dir)
 
-    for step in range(1, 500):
+    init_pol = run_directory('policy_{}'.format(step))
+    pol.save(init_pol)
 
-        policy_params['weights_dir'] = weights_dir
+    from collections import deque
+    last_100 = deque(maxlen=100)
 
-        collector = MultiProcessCollector(
-            policy_params, env_id, n_jobs=6
-        )
+    optimizer = tf.keras.optimizers.Adam(0.01)
+    for step in range(1, 10000):
 
-        start = timeit.default_timer()
-        data = collector.collect(num_collect)
+        old_pol_dir = run_directory('policy_{}'.format(step - 1))
+        policy_params['directory'] = old_pol_dir
 
-        # TODO operates in place!!!!
-        # coll = collapse_episode_data(data)
-        stop = timeit.default_timer()
-        #print(stop - start)
+        # collection
+        collector = SingleProcessCollector(policy_params, env_id)
+        data = collector.collect(1)
+        data.save(old_pol_dir, keys=['reward'])
 
+        # labelling
         return_labeller = SingleProcessLabeller(calculate_returns_wrapper)
         data = return_labeller.label(data)
 
+        # fitting
         pol = make_policy(**policy_params)
+        for _ in range(1):
+            with tf.GradientTape() as tape:
+                loss = pol.get_loss(data)
+                gradients = tape.gradient(loss, pol.trainable_variables)
 
-        with tf.GradientTape() as tape:
-            loss = pol.get_loss(data)
-            gradients = tape.gradient(loss, pol.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, pol.trainable_variables))
 
-        optimizer.apply_gradients(zip(gradients, pol.trainable_variables))
+        new_pol_dir = run_directory('policy_{}'.format(step))
+        pol.save(new_pol_dir)
 
-        weights = directory('run_0', 'policy_{}'.format(step))
-        print(weights)
-        pol.save(weights)
-
+        # logging
         rews = [np.sum(d['reward']) for d in data]
+        last_100.append(np.mean(rews))
 
-        print('reward {} loss {} step {}'.format(np.mean(rews), loss, step))
+        msg = 'last 100 avg {:3.1f} - last 100 max {:3.1f} - loss {:3.1f} step {:5.0f}'.format(
+            np.mean(last_100),
+            np.max(last_100),
+            loss,
+            step
+        )
+        logger = CustomLogger(run_directory('log.log'))
+        logger(msg)
