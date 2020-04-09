@@ -1,9 +1,0 @@
-click
-gym
-matplotlib
-numpy
-pandas
-scikit-learn
-tensorflow==1.13.1
-pyyaml
-hypothesis

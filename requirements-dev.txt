@@ -1,4 +1,0 @@
-ipython
-pytest
-flake8
-jupyterlab
