@@ -10,10 +10,10 @@ setup(
     url='http://www.adgefficiency.com/',
     packages=find_packages(exclude=['tests', 'tests.*']),
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'hypothesis'],
+    tests_require=['pytest'],
     install_requires=['Click'],
     entry_points='''
             [console_scripts]
-            energypy-experiment=energypy.cli:cli
+            energypy=energypy.cli:main
         '''
 )

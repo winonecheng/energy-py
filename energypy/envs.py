@@ -1,11 +1,24 @@
-
-def test_mountain_car_wrapper():
-    env = MountainCarWrapper()
-    env.seed(42)
-    obs = env.reset()
-    obs, r, done, info = env.step(env.action_space.sample())
-
 import gym
+
+
+class NoSpace:
+    def sample(self):
+        return 0
+
+
+class NoEnv():
+    def __init__(self):
+        self.observation_space = NoSpace()
+        self.action_space = NoSpace()
+
+    def step(self, action):
+        return 0, 0, True, {}
+
+    def reset(self):
+        return 0
+
+    def seed(self, seed):
+        pass
 
 
 class MountainCarWrapper():
@@ -26,8 +39,3 @@ class MountainCarWrapper():
 
     def seed(self, seed):
         return self.env.seed(seed)
-
-
-if __name__ == '__main__':
-    test_mountain_car_wrapper()
-
