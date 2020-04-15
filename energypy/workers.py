@@ -52,31 +52,3 @@ def collect(
         obs = next_obs
 
     return transitions
-
-@ray.remote
-def learn_worker(
-    n_rounds,
-    transition_server,
-    parameter_server,
-    *args,
-    **kwargs
-):
-    for _ in range(n_rounds):
-        learn(
-            transition_server,
-            parameter_server,
-            *args,
-            **kwargs
-        )
-
-def learn(
-    transition_server,
-    parameter_server,
-    learner
-):
-    learner = energypy.make('add-learner', 1)
-
-    transitions = transition_server.get_transitions.remote()
-    params = parameter_server.get_params.remote()
-    params = learner.learn(params, transitions)
-    parameter_server.update_params.remote(params)
