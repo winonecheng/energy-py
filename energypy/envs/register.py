@@ -3,6 +3,7 @@
 # from energypy.envs.flex import Flex
 from energypy.envs.battery import Battery
 from energypy.envs.gym import CartPoleEnv, PendulumEnv, MountainCarEnv
+from energypy.envs.appliance import Appliance
 
 env_register = {
     # 'flex': Flex,
@@ -10,6 +11,7 @@ env_register = {
     'cartpole-v0': CartPoleEnv,
     'pendulum-v0': PendulumEnv,
     'mountaincar-v0': MountainCarEnv,
+    'appliance': Appliance
 }
 
 
