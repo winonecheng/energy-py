@@ -15,7 +15,6 @@ class BaseEnv(object):
             seed=None,
             dataset='example',
     ):
-        self.episode = 0
         if seed:
             self.seed(seed)
 
@@ -61,9 +60,6 @@ class BaseEnv(object):
             self.info[k].append(v)
 
         t = transition
-
-        if t['done']:
-            self.episode += 1
 
         #  TODO
         if log:

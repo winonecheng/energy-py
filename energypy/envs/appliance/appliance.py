@@ -14,8 +14,8 @@ class Appliance(BaseEnv):
             self,
             name,
 
-            episode_length=2,
-            sample_strat='fixed&full',
+            episode_length=720,
+            sample_strat='full',
 
             dataset='data',
             **kwargs
@@ -25,7 +25,7 @@ class Appliance(BaseEnv):
 
         super().__init__(**kwargs)
 
-        # TODO Fix highest value
+        # TODO Fix!!
         self.state_space = StateSpace().from_dataset(dataset).append(
                 Prim('Power', 0, 10, 'continuous', 'append')
             )
@@ -33,9 +33,11 @@ class Appliance(BaseEnv):
         self.observation_space = self.state_space
         assert self.state_space.num_samples == self.observation_space.num_samples
 
-        self.episode_length = min(episode_length, self.state_space.num_samples)
+        if sample_strat == 'full':
+            self.episode_length = self.state_space.num_samples
+        else:
+            self.episode_length = min(episode_length, self.state_space.num_samples)
 
-        # TODO Fix highest/lowest value
         self.action_space = ActionSpace().from_primitives(
             Prim('Turn down', -0.1, 0, 'continuous', None)
         )
@@ -50,11 +52,14 @@ class Appliance(BaseEnv):
         return f'<energypy APPLIANCE env - {self.name}>'
 
     def _reset(self):
-        _episode = self.episode % (self.state_space.num_samples // self.episode_length)
-        self.start = _episode * self.episode_length
+        # TODO check!!
+        self.power = self.init_power_df.iloc[self.steps]
 
-        self.power = self.init_power_df.iloc[self.start]
+        self.start, self.end = self.state_space.sample_episode(
+            self.sample_strat, episode_length=self.episode_length
+        )
 
+        # TODO FIX!!
         self.state = self.state_space(
             self.steps, self.start, append={'Power': self.power}
         )
@@ -67,17 +72,16 @@ class Appliance(BaseEnv):
         return self.observation
 
     def _step(self, action):
-        
-        old_power = self.power
-        new_power = old_power + action
+        # TODO check!!
+        init_power = self.init_power_df.iloc[self.steps]
+        new_power = init_power + action
+s
+        # TODO check!!
+        tolerable_power = self.tolerable_power_df.iloc[self.steps]
 
-        tolerable_power = self.tolerable_power_df.iloc[self.start + self.steps]
-
-        # TODO add random to new_power in else condition
         self.power = new_power if new_power >= tolerable_power else tolerable_power
 
-        # TODO fix reward function
-        reward = tolerable_power - self.power
+        reward = self.power - init_power
 
         print(f'old_power: {old_power}, action: {action}, tolerable_power: {tolerable_power}, new_power: {self.power}, reward:{reward}')
 
@@ -87,6 +91,7 @@ class Appliance(BaseEnv):
             next_state = np.zeros((1, *self.state_space.shape))
             next_observation = np.zeros((1, *self.observation_space.shape))
 
+        # TODO FIX!!
         else:
             done = False
             next_state = self.state_space(
