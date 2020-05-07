@@ -37,7 +37,7 @@ class Appliance(BaseEnv):
 
         # TODO Fix highest/lowest value
         self.action_space = ActionSpace().from_primitives(
-            Prim('Up/Down', -1, 1, 'continuous', None)
+            Prim('Turn down', -1, 0, 'continuous', None)
         )
 
         # load init power data
@@ -53,8 +53,6 @@ class Appliance(BaseEnv):
         _episode = self.episode % (self.state_space.num_samples // self.episode_length)
         self.start = _episode * self.episode_length
 
-        # TODO !!chech the index!!
-        print(f'init_power index: {self.start}')
         self.power = self.init_power_df.iloc[self.start]
 
         self.state = self.state_space(
@@ -73,8 +71,6 @@ class Appliance(BaseEnv):
         old_power = self.power
         new_power = old_power + action
 
-        # TODO !!chech the index!!
-        print(f'tolerable_power index: {self.start + self.steps}')
         tolerable_power = self.tolerable_power_df.iloc[self.start + self.steps]
 
         # TODO add random to new_power in else condition
