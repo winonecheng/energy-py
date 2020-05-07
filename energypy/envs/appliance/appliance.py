@@ -37,7 +37,7 @@ class Appliance(BaseEnv):
 
         # TODO Fix highest/lowest value
         self.action_space = ActionSpace().from_primitives(
-            Prim('Turn down', -1, 0, 'continuous', None)
+            Prim('Turn down', -0.1, 0, 'continuous', None)
         )
 
         # load init power data
@@ -76,10 +76,10 @@ class Appliance(BaseEnv):
         # TODO add random to new_power in else condition
         self.power = new_power if new_power >= tolerable_power else tolerable_power
 
-        print(f'old_power: {old_power}, action: {action}, tolerable_power: {tolerable_power}, new_power: {self.power}')
-
         # TODO fix reward function
         reward = tolerable_power - self.power
+
+        print(f'old_power: {old_power}, action: {action}, tolerable_power: {tolerable_power}, new_power: {self.power}, reward:{reward}')
 
         #  zero indexing steps
         if self.steps == self.episode_length - 1:
