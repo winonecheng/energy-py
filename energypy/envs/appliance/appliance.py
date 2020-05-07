@@ -73,10 +73,10 @@ class Appliance(BaseEnv):
 
         tolerable_power = self.tolerable_power_df.iloc[self.start + self.steps]
 
-        print(f'old_power: {old_power}, action: {action}, tolerable_power: {tolerable_power}')
-
         # TODO add random to new_power in else condition
         self.power = new_power if new_power >= tolerable_power else tolerable_power
+
+        print(f'old_power: {old_power}, action: {action}, tolerable_power: {tolerable_power}, new_power: {self.power}')
 
         # TODO fix reward function
         reward = tolerable_power - self.power
