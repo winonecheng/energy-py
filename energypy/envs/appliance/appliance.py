@@ -55,7 +55,7 @@ class Appliance(BaseEnv):
 
         # TODO !!chech the index!!
         print(f'init_power index: {self.start}')
-        self.power = self.init_power_df[self.start]
+        self.power = self.init_power_df.iloc[self.start]
 
         self.state = self.state_space(
             self.steps, self.start, append={'Power': self.power}
