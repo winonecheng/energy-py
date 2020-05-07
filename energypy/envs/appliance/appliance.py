@@ -41,10 +41,10 @@ class Appliance(BaseEnv):
         )
 
         # load init power data
-        self.init_power_df = pd.read_csv(join(dataset, 'init_appliance.csv'), index_col=0, parse_dates=True, usecols=[name])
+        self.init_power_df = pd.read_csv(join(dataset, 'init_appliance.csv'), parse_dates=True, usecols=[name])
 
         # load tolerable power data
-        self.tolerable_power_df = pd.read_csv(join(dataset, 'tolerable.csv'), index_col=0, parse_dates=True, usecols=[name])
+        self.tolerable_power_df = pd.read_csv(join(dataset, 'tolerable.csv'), parse_dates=True, usecols=[name])
     
     def __repr__(self):
         return f'<energypy APPLIANCE env - {self.name}>'
