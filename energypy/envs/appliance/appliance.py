@@ -17,7 +17,7 @@ class Appliance(BaseEnv):
             episode_length=2,
             sample_strat='fixed&full',
 
-            dataset='features',
+            dataset='data',
             **kwargs
     ):
         self.name = name
@@ -41,18 +41,10 @@ class Appliance(BaseEnv):
         )
 
         # load init power data
-        data = pkg_resources.resource_string(
-            'energypy',
-            'examples/{}.csv'.format("init_appliance")
-        )
-        self.init_power_df = pd.read_csv(BytesIO(data), index_col=0, parse_dates=True, usecols=[name])
+        self.init_power_df = pd.read_csv(join(dataset, 'init_appliance.csv'), index_col=0, parse_dates=True, usecols=[name])
 
         # load tolerable power data
-        data = pkg_resources.resource_string(
-            'energypy',
-            'examples/{}.csv'.format("tolerable")
-        )
-        self.tolerable_power_df = pd.read_csv(BytesIO(data), index_col=0, parse_dates=True, usecols=[name])
+        self.tolerable_power_df = pd.read_csv(join(dataset, 'tolerable.csv'), index_col=0, parse_dates=True, usecols=[name])
     
     def __repr__(self):
         return f'<energypy APPLIANCE env - {self.name}>'
