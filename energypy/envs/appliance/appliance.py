@@ -25,10 +25,7 @@ class Appliance(BaseEnv):
 
         super().__init__(**kwargs)
 
-        # TODO Fix!!
-        self.state_space = StateSpace().from_dataset(dataset).append(
-                Prim('Power', 0, 10, 'continuous', 'append')
-            )
+        self.state_space = StateSpace().from_dataset(dataset)
 
         self.observation_space = self.state_space
         assert self.state_space.num_samples == self.observation_space.num_samples
@@ -42,9 +39,6 @@ class Appliance(BaseEnv):
             Prim('Turn down', -0.1, 0, 'continuous', None)
         )
 
-        # load init power data
-        self.init_power_df = pd.read_csv(join(dataset, 'init_appliance.csv'), parse_dates=True)[name]
-
         # load tolerable power data
         self.tolerable_power_df = pd.read_csv(join(dataset, 'tolerable.csv'), parse_dates=True)[name]
     
@@ -52,20 +46,20 @@ class Appliance(BaseEnv):
         return f'<energypy APPLIANCE env - {self.name}>'
 
     def _reset(self):
-        # TODO check!!
-        self.power = self.init_power_df.iloc[self.steps]
-
         self.start, self.end = self.state_space.sample_episode(
             self.sample_strat, episode_length=self.episode_length
         )
 
-        # TODO FIX!!
+        # TODO check!!
         self.state = self.state_space(
-            self.steps, self.start, append={'Power': self.power}
+            self.steps, self.start
         )
         self.observation = self.observation_space(
-            self.steps, self.start, append={'Power': self.power}
+            self.steps, self.start
         )
+
+        # TODO check!!
+        self.power = self.get_state_variable(self.name)
 
         assert self.power >= 0
 
@@ -73,17 +67,16 @@ class Appliance(BaseEnv):
 
     def _step(self, action):
         # TODO check!!
-        init_power = self.init_power_df.iloc[self.steps]
-        new_power = init_power + action
-s
-        # TODO check!!
+        old_power = self.power
+        _new_power = old_power + action
+
         tolerable_power = self.tolerable_power_df.iloc[self.steps]
 
-        self.power = new_power if new_power >= tolerable_power else tolerable_power
+        self.power = _new_power if _new_power >= tolerable_power else tolerable_power
 
-        reward = self.power - init_power
+        reward = self.power - old_power
 
-        print(f'old_power: {old_power}, action: {action}, tolerable_power: {tolerable_power}, new_power: {self.power}, reward:{reward}')
+        # print(f'old_power: {old_power}, action: {action}, tolerable_power: {tolerable_power}, new_power: {self.power}, reward:{reward}')
 
         #  zero indexing steps
         if self.steps == self.episode_length - 1:
@@ -91,17 +84,16 @@ s
             next_state = np.zeros((1, *self.state_space.shape))
             next_observation = np.zeros((1, *self.observation_space.shape))
 
-        # TODO FIX!!
+        # TODO check!!
         else:
             done = False
             next_state = self.state_space(
-                self.steps + 1, self.start,
-                append={'Power': float(self.power)}
+                self.steps + 1, self.start
             )
             next_observation = self.observation_space(
-                self.steps + 1, self.start,
-                append={'Power': float(self.power)}
+                self.steps + 1, self.start
             )
+            # print(next_state)
 
         return {
             'step': int(self.steps),
