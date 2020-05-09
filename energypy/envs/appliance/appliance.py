@@ -68,7 +68,7 @@ class Appliance(BaseEnv):
     def _step(self, action):
         # TODO check!!
         old_power = self.power
-        _new_power = old_power + action
+        _new_power = old_power + action[0]
 
         tolerable_power = self.tolerable_power_df.iloc[self.steps]
 
@@ -105,7 +105,7 @@ class Appliance(BaseEnv):
             'next_observation': next_observation,
             'done': bool(done),
 
-            'Initial power': old_power,
+            'Old power': old_power,
             'Final power': self.power,
             'Tolerable power': tolerable_power
         }
