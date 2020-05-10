@@ -52,7 +52,7 @@ class Appliance(BaseEnv):
         return self.observation
 
     def _step(self, action):
-        _action = (action[0][0] - 1) * 0.1 # range [-1, 1] -> [-0.2, 0]
+        _action = (action - 1) * 0.1 # range [-1, 1] -> [-0.2, 0]
         old_power = self.get_state_variable(self.name)
         _new_power = old_power + _action
 
@@ -66,17 +66,15 @@ class Appliance(BaseEnv):
         if self.steps == self.episode_length - 1:
             done = True
             self.episodes += 1
-            next_state = np.zeros((1, *self.state_space.shape))
-            next_observation = np.zeros((1, *self.observation_space.shape))
-
         else:
             done = False
-            next_state = self.state_space(
-                self.steps + 1, self.start
-            )
-            next_observation = self.observation_space(
-                self.steps + 1, self.start
-            )
+
+        next_state = self.state_space(
+            self.steps + 1, self.start
+        )
+        next_observation = self.observation_space(
+            self.steps + 1, self.start
+        )
 
         return {
             'step': int(self.steps),

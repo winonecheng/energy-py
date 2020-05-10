@@ -66,7 +66,7 @@ class BaseEnv(object):
             #  episode logger is set during experiment
             self.episode_logger.debug(json.dumps(transition))
 
-        return self.observation, t['reward'], t['done'], self.info
+        return self.observation[0], t['reward'], t['done'], self.info
 
     def get_state_variable(self, variable_name):
         """ get single element of the current state """
