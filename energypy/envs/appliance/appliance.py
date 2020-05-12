@@ -65,6 +65,9 @@ class Appliance(BaseEnv):
             reward = old_power - _new_power
             self.power = _new_power
 
+
+        # test: close to tolerable
+        reward = 0 - abs(_new_power-tolerable_power)
         reward *= 10
 
         #  zero indexing steps
@@ -93,5 +96,6 @@ class Appliance(BaseEnv):
 
             'Old power': old_power,
             'Final power': self.power,
-            'Tolerable power': tolerable_power
+            'Tolerable power': tolerable_power,
+            'Acturl action': _action
         }
