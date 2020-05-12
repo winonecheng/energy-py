@@ -55,12 +55,17 @@ class Appliance(BaseEnv):
         _action = (action - 1) * 0.1 # range [-1, 1] -> [-0.2, 0]
         old_power = self.get_state_variable(self.name)
         _new_power = old_power + _action
-
         tolerable_power = self.tolerable_power_df.iloc[self.start + self.steps]
 
-        self.power = _new_power if _new_power >= tolerable_power else tolerable_power
+        # user do feedback
+        if _new_power < tolerable_power:
+            reward = _new_power - tolerable_power
+            self.power = tolerable_power
+        else:
+            reward = old_power - _new_power
+            self.power = _new_power
 
-        reward = (self.power - old_power) * 10
+        reward *= 10
 
         #  zero indexing steps
         if self.steps == self.episode_length - 1:
