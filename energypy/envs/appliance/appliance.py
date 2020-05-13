@@ -67,7 +67,7 @@ class Appliance(BaseEnv):
 
 
         # test: close to tolerable
-        reward = 0 - abs(_new_power-tolerable_power)
+        # reward = 0 - abs(_new_power-tolerable_power)
         reward *= 10
 
         #  zero indexing steps
