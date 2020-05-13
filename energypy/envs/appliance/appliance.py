@@ -52,10 +52,10 @@ class Appliance(BaseEnv):
         return self.observation
 
     def _step(self, action):
-        _action = (action[0][0] - 1) * 0.2 # range [-1, 1] -> [-0.4, 0]
+        _action = (action[0][0] - 1) * 0.15 # range [-1, 1] -> [-0.3, 0]
         old_power = self.get_state_variable(self.name)
         _new_power = old_power + _action
-        tolerable_power = self.tolerable_power_df.iloc[self.start + self.steps]
+        tolerable_power = self.tolerable_power_df.iloc[(self.start + self.steps) % self.state_space.num_samples]
 
         # user do feedback
         if _new_power < tolerable_power:

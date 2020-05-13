@@ -18,7 +18,7 @@ class ContinuousSpace(Primitive):
         super().__init__(*args, **kwargs)
 
     def __call__(self, steps, offset):
-        return float(self.data[steps + offset])
+        return float(self.data[(steps + offset) % self.num_samples])
 
     def sample(self):
         return np.random.uniform(low=self.low, high=self.high)
@@ -44,7 +44,7 @@ class DiscreteSpace(Primitive):
 
     def __call__(self, steps, offset):
         #  data is a 1-D array
-        return int(self.data[steps + offset])
+        return int(self.data[(steps + offset) % self.num_samples])
 
     def sample(self):
         return np.random.randint(self.high)
