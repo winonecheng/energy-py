@@ -66,7 +66,7 @@ class Appliance(BaseEnv):
         #     self.power = _new_power
 
 
-        test: close to tolerable
+        # test: close to tolerable
         reward = 0 - abs(_new_power-tolerable_power)
         reward *= 10
 
