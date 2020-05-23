@@ -57,7 +57,7 @@ class Appliance(BaseEnv):
         _new_power = old_power + _action
         tolerable_power = self.tolerable_power_df.iloc[(self.start + self.steps) % self.state_space.num_samples]
 
-        user do feedback
+        # user do feedback
         if _new_power < tolerable_power:
             reward = _new_power - tolerable_power
             self.power = tolerable_power
