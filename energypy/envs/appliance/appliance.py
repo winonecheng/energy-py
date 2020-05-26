@@ -19,6 +19,9 @@ class Appliance(BaseEnv):
             dataset='data',
             **kwargs
     ):
+        self.metadata = {'render.modes': []}
+        self.reward_range = (-float('inf'), float('inf'))
+
         self.name = name
         self.episodes = 0
         self.episode_length = episode_length
