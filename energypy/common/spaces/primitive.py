@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from gym.spaces import Box, Discrete
+
 
 class Primitive:
     """ inits the primitive spaces """
@@ -12,7 +14,7 @@ class Primitive:
         self.data = np.array(data).reshape(-1)
 
 
-class ContinuousSpace(Primitive):
+class ContinuousSpace(Primitive, Box):
     """ single dimension continuous space  - car accelerator """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,7 +37,7 @@ class ContinuousSpace(Primitive):
         return np.linspace(self.low, self.high, num_discrete).tolist()
 
 
-class DiscreteSpace(Primitive):
+class DiscreteSpace(Primitive, Discrete):
     """ single dimension discrete space - gears in car """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
